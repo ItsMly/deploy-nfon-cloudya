@@ -1,5 +1,3 @@
-#requires -version 2
-
 <#
 .SYNOPSIS
 This script tries to install the newest version of Cloudya Desktop by NFON from the official website.
@@ -20,10 +18,11 @@ None
 .OUTPUTS
 Just output on screen
 .NOTES
-Version:        1.3.1
+Version:        2.0
+Author:         ItsMly (samily.it)
 Author:         info@singleton-factory.de
-Creation Date:  2023-03-03
-Purpose/Change: Bugfix Update
+Creation Date:  2025-12-18
+Purpose/Change: Updating
   
 .EXAMPLE
 .\manage-nfon-cloudya.ps1 -Action Install -Autostart -EnableCRM -DisableUpdateCheck
@@ -44,7 +43,7 @@ param(
 )
 
 # Version of this script
-$ScriptVersion = "1.3.1"
+$ScriptVersion = "2.0"
 
 # Configuration
 # Contains the URL with download links - will be scraped automatically for the latest version
@@ -65,7 +64,7 @@ function GetDownloadURL {
     else {
         Log -Severity "Info" "Getting download URL ..."
         # Send a request to the website and get the response
-        $response = Invoke-WebRequest $url -UseBasicParsing
+        $response = Invoke-WebRequest $url
 
         # Define the regex patterns to extract the download URLs and version numbers
         $regexDefault = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d\.\d\.\d)-win-msi\.zip'
@@ -123,7 +122,7 @@ function DownloadSetupFile {
 
     # Download the setup file
     Log -Severity "Info" "Downloading setup file from $url ..."
-    Start-BitsTransfer -Source $url -Destination $setupFile
+    Invoke-WebRequest -Uri $url -OutFile $setupFile
     Log -Severity "Info" "Download was saved to $setupFile"
 }
 
@@ -227,7 +226,7 @@ function Install($EnableCRM) {
         if ($setupFile) {
             # Install the setup file
             Log -Severity "Info" "Starting installation process ..."
-            Start-Process -FilePath msiexec.exe -ArgumentList "/i $setupFile /qn /norestart REBOOT=ReallySuppress" -Wait
+            Start-Process -FilePath msiexec.exe -ArgumentList @("/i", $setupFile, "/qn", "/norestart", "REBOOT=ReallySuppress") -Wait
             # Wait until crm.exe is not running
             Log -Severity "Info" "Waiting for crm.exe to finish ..."
             while ($null -ne (Get-Process -Name crm -ErrorAction SilentlyContinue)) {
