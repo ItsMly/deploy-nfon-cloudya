@@ -20,12 +20,12 @@ Just output on screen
 .NOTES
 Version:        2.0
 Author:         ItsMly (samily.it)
-Author:         info@singleton-factory.de
+Original Author: info@singleton-factory.de
 Creation Date:  2025-12-18
 Purpose/Change: Updating
   
 .EXAMPLE
-.\manage-nfon-cloudya.ps1 -Action Install -Autostart -EnableCRM -DisableUpdateCheck
+.\Deploy-NFONCloudya.ps1 -Action Install -Autostart -EnableCRM -DisableUpdateCheck
 #>
 
 #---------------------------------------------------------[Initialisations]--------------------------------------------------------
@@ -50,8 +50,11 @@ $ScriptVersion = "2.0"
 $url = "https://www.nfon.com/de/service/downloads"
 #-----------------------------------------------------------[Functions]------------------------------------------------------------
 function GetDownloadURL {
+    param(
+        [string]$Version = $script:Version
+    )
     # Check if Version is #.#.# format
-    if ($Version -match "\d\.\d\.\d") {
+    if ($Version -match "^\d+\.\d+\.\d+$") {
         Log -Severity "Info" "You specified version $Version"
         Log -Severity "Info" "This will be used instead of the latest version."
         return [PSCustomObject]@{
@@ -67,8 +70,8 @@ function GetDownloadURL {
         $response = Invoke-WebRequest $url
 
         # Define the regex patterns to extract the download URLs and version numbers
-        $regexDefault = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d\.\d\.\d)-win-msi\.zip'
-        $regexCRM = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d\.\d\.\d)-crm-win-msi\.zip'
+        $regexDefault = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d+\.\d+\.\d+)-win-msi\.zip'
+        $regexCRM = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d+\.\d+\.\d+)-crm-win-msi\.zip'
 
         # Search for the pattern in the response (without CRM)
         if ([regex]::IsMatch($response.Content, $regexDefault)) {
@@ -216,7 +219,7 @@ function Install($EnableCRM) {
         else {
             Log -Severity "Error" "Downloaded file is not a zip file. Maybe the URL returns 404? Program will exit."
             Log -Severity "Error" "Please check if the detected URL is correct."
-            cleanup
+            Cleanup
             exit 1
         }
 
@@ -236,7 +239,7 @@ function Install($EnableCRM) {
         }
         else {
             Log -Severity "Error" "Setup file not found. Program will exit."
-            cleanup
+            Cleanup
             exit 1
         }
         Log -Severity "Info" "Checking if installation was successful ..."
@@ -359,7 +362,7 @@ function ShowHelp {
     Log -Severity "Info" "To disable the update check, run this script with the -DisableUpdateCheck parameter."
     Log -Severity "Info" "You can specify the version with the -Version parameter. This will be used instead of the latest version."
     Log -Severity "Info" "You can combine the parameters."
-    Log -Severity "Info" "Example: .\manage-nfon-cloudya.ps1 -Action Install -Autostart -EnableCRM -DisableUpdateCheck"
+    Log -Severity "Info" "Example: .\Deploy-NFONCloudya.ps1 -Action Install -Autostart -EnableCRM -DisableUpdateCheck"
 }
 function Update {
     # Check if the program is already installed
@@ -416,24 +419,20 @@ function Update {
 
 function Autostart([bool]$trueOrFalse) {
     if ($trueOrFalse -eq $false) {
+        Log -Severity "Info" "Disabling autostart ..."
         # Find shortcut in startup folder
-        if ($trueOrFalse -eq $false) {
-            Log -Severity "Info" "Disabling autostart ..."
-            # Find shortcut in startup folder
-            $shortcut = Get-ChildItem -Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\" -Filter "Cloudya.lnk"
-            if ($shortcut) {
-                try {
-                    Remove-Item -Path $shortcut.FullName
-                    Log -Severity "Info" "Autostart disabled."
-                }
-                catch {
-                    Log -Severity "Error" "Could not disable autostart. $($_.Exception.Message)"
-                }
-            
+        $shortcut = Get-ChildItem -Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\" -Filter "Cloudya.lnk"
+        if ($shortcut) {
+            try {
+                Remove-Item -Path $shortcut.FullName
+                Log -Severity "Info" "Autostart disabled."
             }
-            else {
-                Log -Severity "Warn" "Autostart was already disabled."
+            catch {
+                Log -Severity "Error" "Could not disable autostart. $($_.Exception.Message)"
             }
+        }
+        else {
+            Log -Severity "Warn" "Autostart was already disabled."
         }
     }
     elseif ($trueOrFalse -eq $true) {
@@ -559,7 +558,6 @@ function Log {
             $color = "Red"
         }
     }
-    $severityText = "[$Severity]"
     $severityText = "[$Severity]".ToUpper()
     $dateTimeText = "$date $time"
     $messageText = $Message
@@ -576,7 +574,7 @@ function Log {
 }
 
 function Header {
-    Log -Severity "Info" "Cloudya All-in-One Desktop Manager by Aaron Viehl (Singleton Factory GmbH)"
+    Log -Severity "Info" "Cloudya All-in-One Desktop Manager by ItsMly (samily.it). Original script by Aaron Viehl (Singleton Factory GmbH)."
     Log -Severity "Info" "Your toolkit for a better NFON Cloudya experience."
     Log -Severity "Info" "Version: $ScriptVersion"
     Log -Severity "Info" "======================="
@@ -618,7 +616,7 @@ switch ($Action) {
     "Help" {
         ShowHelp
     }
-    "Default" {
+    default {
         ShowHelp
     }
 }
@@ -641,4 +639,3 @@ elseif ($PSBoundParameters.ContainsKey('DisableUpdateCheck') -and !$DisableUpdat
 
 # Cleanup all temporary files
 Cleanup
-exit

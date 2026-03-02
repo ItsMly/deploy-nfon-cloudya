@@ -6,8 +6,8 @@ Describe "GetDownloadURL Function Tests" {
     It "gets a valid download URL for the latest version" {
         $result = GetDownloadURL
         $result | Should -Not -BeNullOrEmpty
-        $result.URLDefault | Should -Match 'https:\/\/cdn\.cloudya\.com\/cloudya-\d+\.\d+\.\d+-win-msi\.zip'
-        $result.URLCRM | Should -Match 'https:\/\/cdn\.cloudya\.com\/cloudya-\d+\.\d+\.\d+-crm-win-msi\.zip'
+        $result.URLDefault | Should -Match 'https://cdn\.cloudya\.com/cloudya-\d+\.\d+\.\d+-win-msi\.zip'
+        $result.URLCRM | Should -Match 'https://cdn\.cloudya\.com/cloudya-\d+\.\d+\.\d+-crm-win-msi\.zip'
     }
 
     It "gets a valid download URL for a specified version" {
