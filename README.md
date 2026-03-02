@@ -2,99 +2,100 @@
 
 *Version: 2.0*
 
-![Status des URL-Tests](https://github.com/ItsMly/deploy-nfon-cloudya/actions/workflows/get_download_url_test.yml/badge.svg)
+![Download URL Test Status](https://github.com/ItsMly/deploy-nfon-cloudya/actions/workflows/get_download_url_test.yml/badge.svg)
 
-Dieses Skript versucht, die neueste Version von Cloudya Desktop by NFON von der offiziellen Website zu installieren. Es bietet darüber hinaus einige erweiterte Konfigurationseinstellungen für die Verteilung innerhalb von Firmennetzwerken, da der native Installer von NFON dies nicht bietet.
+This script attempts to install the latest version of Cloudya Desktop by NFON from the official website. It also provides some advanced configuration options for deployment within corporate networks, as the native NFON installer does not offer these.
 
-## Hinweis
+## Notice
 
-Bitte beachten Sie, dass die Verwendung dieses Powershell-Skripts auf eigene Gefahr erfolgt. Das Skript befindet sich noch in der Entwicklung und kann daher Fehler enthalten. Bitte prüfen und testen Sie das Skript sorgfältig, bevor Sie es in einer produktiven Umgebung verwenden. 
+Please note that the use of this PowerShell script is at your own risk. The script is still in development and may contain bugs. Please review and test the script carefully before using it in a production environment.
 
-Der Autor übernimmt keine Verantwortung für Schäden oder Verluste, die durch die Verwendung des Skripts entstehen könnten.
+The author assumes no responsibility for any damage or loss that may result from using the script.
 
 ## Installation
 
-1. Laden Sie das Skript herunter und speichern Sie es in einem beliebigen Verzeichnis auf Ihrem Computer.
-2. Starten Sie es in einer administrativen Powershell-Session mit den notwendigen Parametern.
+1. Download the script and save it to any directory on your computer.
+2. Run it in an administrative PowerShell session with the required parameters.
 
-## Verwendung
+## Usage
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action {Install, Detect, Update, Uninstall} [-EnableCRM] [-Autostart] [-DisableUpdateCheck] [-Version #.#.#]
 ```
 
-## Parameter
+## Parameters
 
-| Parameter                                     | Verwendung                                                   |
+| Parameter                                     | Description                                                  |
 | --------------------------------------------- | ------------------------------------------------------------ |
-| `Action {Install, Detect, Update, Uninstall}` | Sagt dem Script, welche Aktion ausgeführt werden soll:<br />Install → Installieren<br />Detect → Aktuelle Version anzeigen<br />Update → Neuste Version installieren, sofern vorhanden<br />Uninstall → Software entfernen |
-| `EnableCRM`                                   | Installiert Connect CRM automatisch mit                      |
-| `Autostart`                                   | Aktiviert Cloudya im Windows-Autostart für alle Benutzer. Kann auch für die Deaktivierung genutzt werden mittels `-Autostart:$false` |
-| `DisableUpdateCheck`                          | Deaktiviert den automatischen Update-Check von Cloudya. Standardmäßig wird der Check aktiviert, jedoch benötigt das Update Admin-Rechte. In Firmennetzwerken sollte der Update-Check daher deaktiviert werden. |
-| `Version #.#.#`                               | Gibt eine zu installierende Version ein. Die neuste Version wird dann nicht automatisch ermittelt. Dies löst das Problem, dass NFON nicht überall die gleichen Versionen bereitstellt. |
-## Funktionsweise
+| `Action {Install, Detect, Update, Uninstall}` | Tells the script which action to perform:<br />Install → Install the software<br />Detect → Display the currently installed version<br />Update → Install the latest version if available<br />Uninstall → Remove the software |
+| `EnableCRM`                                   | Automatically installs CRM Connect alongside Cloudya         |
+| `Autostart`                                   | Enables Cloudya in the Windows autostart for all users. Can also be used to disable autostart via `-Autostart:$false` |
+| `DisableUpdateCheck`                          | Disables the automatic update check in Cloudya. By default the check is enabled, but updates require admin privileges. In corporate networks the update check should therefore be disabled. |
+| `Version #.#.#`                               | Specifies a version to install. The latest version will not be determined automatically. This solves the issue of NFON not providing the same versions everywhere. |
 
-1. Das Script durchsucht die Webseite `https://www.nfon.com/de/service/downloads` nach den jeweiligen Downloadlinks für die neusten MSI-Installer.
-2. Die Dateien werden heruntergeladen.
-3. Die Installation wird gestartet und überwacht.
-4. Gegebenenfalls notwendige Anpassungen (Autostart, Update-Check, CRM-Installation) werden durchgeführt.
+## How It Works
 
-### Update-Check deaktivieren
+1. The script scrapes the website `https://www.nfon.com/de/service/downloads` for the latest MSI installer download links.
+2. The files are downloaded.
+3. The installation is started and monitored.
+4. Any necessary adjustments (autostart, update check, CRM installation) are applied.
 
-Durch Angabe des Parameters `-DisableUpdateCheck` wird die interne Cloudya-Funktion für das Prüfen auf neue Updates deaktiviert. Somit werden Benutzer nicht mehr zum Updaten der Cloudya-Installation aufgefordert. Dies ist insbesondere im Unternehmensumfeld sinnvoll, da das Update lokale Administratorberechtigungen benötigt.
+### Disabling the Update Check
 
-Die Deaktivierung des Update-Checks geschieht über einen Umweg, da es [keine direkte Konfigurationsmöglichkeit](https://partnercommunity.nfon.com/t/release-teaser-cloudya-app-1-6/2618/33) gibt:
+By specifying the `-DisableUpdateCheck` parameter, the internal Cloudya function for checking for new updates is disabled. This prevents users from being prompted to update their Cloudya installation. This is particularly useful in corporate environments, as updates require local administrator privileges.
 
-1. Die Datei `control-cloudya-update.ps1` wird im Programmordner der Cloudya-Installation erstellt.
-2. Es wird eine Autostart Verknüpfung für alle Benutzer erstellt, welche das Script `control-cloudya-update.ps1` bei jedem Login ausführt.
-3. Das Script erzeugt oder löscht die Datei `%appdata%\cloudya-desktop\Cloudya-local-settings.json`
-   1. Wenn die Datei erzeugt wird, ist der Inhalt `{"handle-updates": "IGNORE" }` und deaktiviert das Update.
-   2. Wenn die Datei gelöscht wird, funktioniert der Updater wieder wie gewohnt.
+The update check is disabled via a workaround, since there is [no direct configuration option](https://partnercommunity.nfon.com/t/release-teaser-cloudya-app-1-6/2618/33):
 
-*Hinweis: Wenn besondere Sicherheitsvorkehrungen bezüglich der Nutzung von PowerShell-Scripten aktiv sind, schlägt diese Option möglicherweise fehl. In diesem Fall muss eine andere Möglichkeit gefunden werden.* 
+1. The file `control-cloudya-update.ps1` is created in the Cloudya installation directory.
+2. A startup shortcut is created for all users that runs `control-cloudya-update.ps1` at each login.
+3. The script creates or deletes the file `%appdata%\cloudya-desktop\Cloudya-local-settings.json`
+   1. When the file is created, its content is `{"handle-updates": "IGNORE" }`, which disables the update.
+   2. When the file is deleted, the updater works as normal again.
 
-## Beispiel
+*Note: If special security policies regarding the use of PowerShell scripts are active, this option may fail. In that case an alternative approach must be found.*
 
-Um die aktuelle Version von Cloudya mit CRM Connect sowie automatischem Start zu installieren:
+## Examples
+
+To install the latest version of Cloudya with CRM Connect, autostart, and disabled update check:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action Install -EnableCRM -Autostart -DisableUpdateCheck
 ```
 
-Um Cloudya komplett zu deinstallieren:
+To completely uninstall Cloudya:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action Uninstall
 ```
 
-Um die aktuell installierte Version auszulesen:
+To detect the currently installed version:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action Detect
 ```
 
-Um ein Update durchzuführen:
+To perform an update:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action Update
 ```
 
-Um den Autostart nachträglich zu aktivieren:
+To enable autostart after installation:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Autostart
 ```
 
-Um den Autostart nachträglich zu deaktivieren:
+To disable autostart after installation:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Autostart:$false
 ```
 
-Um eine spezifische Version zu installieren:
+To install a specific version:
 
 ```powershell
 .\Deploy-NFONCloudya.ps1 -Action Install -Version 1.7.0
 ```
 
-Alle Parameter lassen sich miteinander kombinieren.
+All parameters can be combined with each other.
