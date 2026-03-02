@@ -11,7 +11,7 @@ Describe "GetDownloadURL Function Tests" {
     }
 
     It "gets a valid download URL for a specified version" {
-        $specifiedVersion = '1.7.0' # replace with a version number you want to test
+        $specifiedVersion = if ($env:TEST_VERSION) { $env:TEST_VERSION } else { '2.0.0' }
         $result = GetDownloadURL -Version $specifiedVersion
         $result | Should -Not -BeNullOrEmpty
         $result.URLDefault | Should -Be "https://cdn.cloudya.com/cloudya-$specifiedVersion-win-msi.zip"

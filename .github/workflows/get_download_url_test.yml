@@ -3,6 +3,12 @@ name: Test ob Download-URL ermittelbar ist
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Specific version to test (e.g. 2.1.0). Leave empty to test latest.'
+        required: false
+        default: ''
 
 jobs:
   test-script:
@@ -18,5 +24,7 @@ jobs:
 
     - name: Run Pester Tests
       shell: pwsh
+      env:
+        TEST_VERSION: ${{ github.event.inputs.version }}
       run: |
         Invoke-Pester -Path './.github/.tests/Deploy-NFONCloudya.tests.ps1' -Output Detailed
