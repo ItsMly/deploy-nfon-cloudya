@@ -67,7 +67,7 @@ function GetDownloadURL {
     else {
         Log -Severity "Info" "Getting download URL ..."
         # Send a request to the website and get the response
-        $response = Invoke-WebRequest $url
+        $response = Invoke-WebRequest $url -UseBasicParsing
 
         # Define the regex patterns to extract the download URLs and version numbers
         $regexDefault = 'https:\/\/cdn\.cloudya\.com\/cloudya-(\d+\.\d+\.\d+)-win-msi\.zip'
@@ -125,7 +125,7 @@ function DownloadSetupFile {
 
     # Download the setup file
     Log -Severity "Info" "Downloading setup file from $url ..."
-    Invoke-WebRequest -Uri $url -OutFile $setupFile
+    Invoke-WebRequest -Uri $url -OutFile $setupFile -Method Get -UseBasicParsing
     Log -Severity "Info" "Download was saved to $setupFile"
 }
 
@@ -525,14 +525,18 @@ if (`$UpdatesEnabled -eq `$true) {
         Log -Severity "Error" "Failed to create update control script: $($_.Exception.Message)"
         throw
     }
-
+	try {
     # Create auto start shortcut for update control script
     $WshShell = New-Object -ComObject "WScript.Shell"
     $Shortcut = $WshShell.CreateShortcut("$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Cloudya Update Control.lnk")
     $Shortcut.TargetPath = "powershell.exe"
     $Shortcut.Arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$CloudyaInstallLocation\control-cloudya-update.ps1`""
-    $Shortcut.WindowStyle = 0
     $Shortcut.Save()
+	    }
+    catch {
+        Log -Severity "Error" "Failed to create Shortcut for update control script: $($_.Exception.Message)"
+        throw
+    }
 }
 
 function Log {
